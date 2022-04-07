@@ -1,43 +1,19 @@
 import tensorflow as tf
 
+from tflo.extras import test_utils
 from tflo.extras.series import LinearOperatorStaticPowerSeries
 
 
-class LinearOperatorStaticPowerSeriesTest(tf.test.TestCase):
-    def test_matmul(self, seed=0):
-        rng = tf.random.Generator.from_seed(seed)
-        n = 5
-        n_rhs = 2
-        coeffs = rng.normal((3,)).numpy()
-        coeffs[3:] = 0
-        A = rng.normal((n, n))
-        x = rng.normal((n, n_rhs))
-
-        A_op = tf.linalg.LinearOperatorFullMatrix(A)
-        op = LinearOperatorStaticPowerSeries(A_op, coeffs)
-
-        actual = op.matmul(x)
-        Ax = A @ x
-        AAx = A @ Ax
-        expected = coeffs[0] * x + coeffs[1] * Ax + coeffs[2] * AAx
-        self.assertAllClose(actual, expected)
-
-    def test_matvec(self, seed=0):
-        rng = tf.random.Generator.from_seed(seed)
+class LinearOperatorStaticPowerSeriesTest(
+    tf.test.TestCase, test_utils.NonSingularLinearOperatorTest
+):
+    def _get_operator(self, rng: tf.random.Generator):
         n = 5
         coeffs = rng.normal((3,)).numpy()
-        coeffs[3:] = 0
         A = rng.normal((n, n))
-        x = rng.normal((n,))
-
         A_op = tf.linalg.LinearOperatorFullMatrix(A)
-        op = LinearOperatorStaticPowerSeries(A_op, coeffs)
-
-        actual = op.matvec(x)
-        Ax = tf.linalg.matvec(A, x)
-        AAx = tf.linalg.matvec(A, Ax)
-        expected = coeffs[0] * x + coeffs[1] * Ax + coeffs[2] * AAx
-        self.assertAllClose(actual, expected)
+        op = LinearOperatorStaticPowerSeries(A_op, coeffs, is_non_singular=True)
+        return op
 
 
 if __name__ == "__main__":

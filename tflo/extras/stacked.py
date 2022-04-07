@@ -72,7 +72,7 @@ class LinearOperatorHStacked(tf.linalg.LinearOperator):
 
     def _matvec(self, x, adjoint: bool = False):
         if adjoint:
-            return self._adjoint().matmul(x)
+            return self._adjoint().matvec(x)
         xs = tf.split(
             x, [op.domain_dimension_tensor() for op in self._operators], axis=-1
         )
