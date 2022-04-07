@@ -1,11 +1,15 @@
 import tensorflow as tf
 
-from tflo.extras import test_utils
+from tflo import test_utils
 from tflo.extras.sparse import LinearOperatorSparseMatrix
 from tflo.utils import get_random_st
 
 
-class LinearOperatorSparseMatrixTest(tf.test.TestCase, test_utils.LinearOperatorTest):
+class LinearOperatorSparseMatrixTest(
+    tf.test.TestCase,
+    test_utils.LinearOperatorTest,
+    test_utils.MatrixTest,
+):
     def _get_operator(self, rng: tf.random.Generator):
         batch_shape = ()
         range_dim = 7

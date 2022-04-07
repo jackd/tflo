@@ -253,21 +253,22 @@ for method in _methods:
 
 @register_matrix_cls(tf.linalg.LinearOperatorAdjoint)
 class AdjointMatrix(Matrix):
-    matrix: Matrix
+    operator: Matrix
     is_non_singular: tp.Optional[bool] = None
     is_self_adjoint: tp.Optional[bool] = None
     is_positive_definite: tp.Optional[bool] = None
     is_square: tp.Optional[bool] = None
-    name: str = "AdjointMatrix"
+    name: tp.Optional[str] = "AdjointMatrix"
 
     class Spec:
         @property
         def shape(self):
-            return self.matrix.shape
+            shape = self.operator.shape
+            return tf.TensorShape((*shape[:-2], shape[-1], shape[-2]))
 
         @property
         def dtype(self):
-            return self.matrix.dtype
+            return self.operator.dtype
 
 
 @register_matrix_cls(tf.linalg.LinearOperatorComposition)
@@ -331,16 +332,6 @@ class FullMatrix(Matrix):
             return self.matrix.dtype
 
 
-# # @wraps(tf.linalg.LinearOperatorIdentity)
-# # @register_matrix_cls(tf.linalg.LinearOperatorIdentity)
-# # class IdentityMatrix(Matrix):
-# #     num_rows: int
-# #     batch_shape: tf.Tensor
-
-# #     def to_operator(self):
-# #         return tf.linalg.LinearOperatorIdentity(num_rows)
-
-
 @register_matrix_cls(tf.linalg.LinearOperatorScaledIdentity)
 class ScaledIdentityMatrix(Matrix):
     num_rows: int
@@ -349,6 +340,7 @@ class ScaledIdentityMatrix(Matrix):
     is_non_singular: tp.Optional[bool] = None
     is_positive_definite: tp.Optional[bool] = None
     is_square: tp.Optional[bool] = None
+    assert_proper_shapes: bool = False
     name: str = "ScaledIdentityMatrix"
 
     class Spec:
@@ -360,4 +352,4 @@ class ScaledIdentityMatrix(Matrix):
 
         @property
         def dtype(self):
-            return tf.float32 if isinstance(self.multiplier, float) else tf.int32
+            return self.multiplier.dtype

@@ -1,9 +1,14 @@
 import tensorflow as tf
 
-from tflo.extras import cg, test_utils
+from tflo import test_utils
+from tflo.extras import cg
 
 
-class LinearOperatorCGSolverTest(tf.test.TestCase, test_utils.LinearOperatorTest):
+class LinearOperatorCGSolverTest(
+    tf.test.TestCase,
+    test_utils.LinearOperatorTest,
+    test_utils.MatrixTest,
+):
     def _get_operator(self, rng: tf.random.Generator):
         n = 5
         A = rng.uniform((n, n))

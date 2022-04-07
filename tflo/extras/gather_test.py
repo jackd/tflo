@@ -1,9 +1,14 @@
 import tensorflow as tf
 
-from tflo.extras import gather, test_utils
+from tflo import test_utils
+from tflo.extras import gather
 
 
-class LinearOperatorGatherTest(tf.test.TestCase, test_utils.LinearOperatorTest):
+class LinearOperatorGatherTest(
+    tf.test.TestCase,
+    test_utils.LinearOperatorTest,
+    test_utils.MatrixTest,
+):
     def _get_operator(self, rng: tf.random.Generator):
         num_rows = 5
         num_columns = 10

@@ -23,8 +23,3 @@ dispatch_for_matrix_usage(tf.linalg.matmul, {"a": Matrix}, {"b": Matrix})
 dispatch_for_matrix_usage(tf.linalg.matvec, {"a": Matrix})
 dispatch_for_matrix_usage(tf.linalg.solve, {"matrix": Matrix})
 dispatch_for_matrix_usage(tf.linalg.trace, {"x": Matrix})
-
-
-# @tf.experimental.dispatch_for_api(tf.linalg.adjoint, {"matrix": Matrix})
-# def adjoint(matrix: Matrix, name: tp.Optional[str] = None) -> Matrix:
-#     return Matrix.from_operator(tf.linalg.adjoint(matrix.to_operator(), name=name))

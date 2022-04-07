@@ -1,6 +1,7 @@
 import tensorflow as tf
 
-from tflo.extras import stacked, test_utils
+from tflo import test_utils
+from tflo.extras import stacked
 
 
 def get_tensors(
@@ -14,7 +15,11 @@ def get_tensors(
     return tf.split(stacked, var_dims, axis=var_axis)
 
 
-class VStackedTest(tf.test.TestCase, test_utils.LinearOperatorTest):
+class VStackedTest(
+    tf.test.TestCase,
+    test_utils.LinearOperatorTest,
+    test_utils.MatrixTest,
+):
     def _get_operator(self, rng):
         tensors = get_tensors(rng, -2)
         return stacked.LinearOperatorVStacked(
@@ -23,7 +28,11 @@ class VStackedTest(tf.test.TestCase, test_utils.LinearOperatorTest):
         return op
 
 
-class HStackedTest(tf.test.TestCase, test_utils.LinearOperatorTest):
+class HStackedTest(
+    tf.test.TestCase,
+    test_utils.LinearOperatorTest,
+    test_utils.MatrixTest,
+):
     def _get_operator(self, rng):
         tensors = get_tensors(rng, -1)
         return stacked.LinearOperatorHStacked(

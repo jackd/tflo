@@ -1,18 +1,20 @@
 import tensorflow as tf
 
-from tflo.matrix.test_utils import MatrixTest
+from tflo import test_utils
 
 
-class FullMatrixTest(tf.test.TestCase, MatrixTest):
+class AdjointMatrixTest(tf.test.TestCase, test_utils.MatrixTest):
     def _get_operator(self, rng: tf.random.Generator):
         batch_shape = (5,)
         range_dim = 3
         domain_dim = 7
         A = rng.normal((*batch_shape, range_dim, domain_dim))
-        return tf.linalg.LinearOperatorFullMatrix(A)
+        A = tf.linalg.LinearOperatorFullMatrix(A)
+        A = tf.linalg.LinearOperatorAdjoint(A)
+        return A
 
 
-class CompositionMatrixTest(tf.test.TestCase, MatrixTest):
+class CompositionMatrixTest(tf.test.TestCase, test_utils.MatrixTest):
     def _get_operator(self, rng: tf.random.Generator):
         batch_shape = (5,)
         range_dim = 3
@@ -28,6 +30,30 @@ class CompositionMatrixTest(tf.test.TestCase, MatrixTest):
         return tf.linalg.LinearOperatorComposition(ops)
 
 
+class DiagMatrixTest(tf.test.TestCase, test_utils.MatrixTest):
+    def _get_operator(self, rng: tf.random.Generator):
+        batch_shape = (5,)
+        num_rows = 3
+        diag = rng.normal((*batch_shape, num_rows))
+        return tf.linalg.LinearOperatorDiag(diag)
+
+
+class FullMatrixTest(tf.test.TestCase, test_utils.MatrixTest):
+    def _get_operator(self, rng: tf.random.Generator):
+        batch_shape = (5,)
+        range_dim = 3
+        domain_dim = 7
+        A = rng.normal((*batch_shape, range_dim, domain_dim))
+        return tf.linalg.LinearOperatorFullMatrix(A)
+
+
+class ScaledIdentityMatrixTest(tf.test.TestCase, test_utils.MatrixTest):
+    def _get_operator(self, rng: tf.random.Generator):
+        batch_shape = (5,)
+        num_rows = 3
+        multiplier = rng.normal(batch_shape)
+        return tf.linalg.LinearOperatorScaledIdentity(num_rows, multiplier)
+
+
 if __name__ == "__main__":
-    # tf.test.main()
-    CompositionMatrixTest().test_to_operator()
+    tf.test.main()
