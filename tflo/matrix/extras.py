@@ -13,16 +13,6 @@ class CGSolverMatrix(Matrix):
     max_iter: int = 20
     name: str = "CGSolverMatrix"
 
-    @classmethod
-    def from_operator(cls, operator):
-        assert isinstance(operator, extras.LinearOperatorCGSolver)
-        return cls(
-            Matrix.from_operator(operator.operator),
-            tol=operator.tol,
-            max_iter=operator.max_iter,
-            name=operator.name,
-        )
-
     @property
     def is_square(self) -> bool:
         return True
@@ -129,20 +119,7 @@ class StaticPowerSeriesMatrix(Matrix):
     is_self_adjoint: tp.Optional[bool] = None
     is_non_singular: tp.Optional[bool] = None
     is_positive_definite: tp.Optional[bool] = None
-
     name: str = "StaticPowerSeriesMatrix"
-
-    @classmethod
-    def from_operator(cls, operator):
-        assert isinstance(operator, extras.LinearOperatorStaticPowerSeries)
-        return cls(
-            Matrix.from_operator(operator.operator),
-            coeffs=operator._coeffs,
-            is_self_adjoint=operator.is_self_adjoint,
-            is_positive_definite=operator.is_positive_definite,
-            is_non_singular=operator.is_non_singular,
-            name=operator.name,
-        )
 
     @property
     def is_square(self) -> bool:
