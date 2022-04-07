@@ -137,3 +137,37 @@ class StaticPowerSeriesMatrix(Matrix):
         @property
         def is_square(self):
             return True
+
+
+@register_matrix_cls(extras.LinearOperatorGather)
+class GatherMatrix(Matrix):
+    indices: tf.Tensor
+    num_columns: int
+    dtype: tf.DType = tf.float32
+    is_non_singular: tp.Optional[bool] = None
+    is_self_adjoint: tp.Optional[bool] = None
+    is_positive_definite: tp.Optional[bool] = None
+    is_square: tp.Optional[bool] = None
+    name: str = "GatherMatrix"
+
+    class Spec:
+        @property
+        def shape(self):
+            return tf.TensorShape((self.indices.shape[0], self.num_columns))
+
+
+@register_matrix_cls(extras.LinearOperatorScatter)
+class ScatterMatrix(Matrix):
+    indices: tf.Tensor
+    num_rows: int
+    dtype: tf.DType = tf.float32
+    is_non_singular: tp.Optional[bool] = None
+    is_self_adjoint: tp.Optional[bool] = None
+    is_positive_definite: tp.Optional[bool] = None
+    is_square: tp.Optional[bool] = None
+    name: str = "ScatterMatrix"
+
+    class Spec:
+        @property
+        def shape(self):
+            return tf.TensorShape((self.num_rows, self.indices.shape[0]))
