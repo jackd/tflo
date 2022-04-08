@@ -9,6 +9,7 @@ from tflo.matrix.core import Matrix, register_matrix_cls
 @register_matrix_cls(extras.LinearOperatorCGSolver)
 class CGSolverMatrix(Matrix):
     operator: Matrix
+    preconditioner: tp.Optional[Matrix] = None
     tol: float = 1e-5
     max_iter: int = 20
     name: str = "CGSolverMatrix"

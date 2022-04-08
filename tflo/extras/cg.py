@@ -1,10 +1,15 @@
+import typing as tp
+
 import tensorflow as tf
+
+from tflo.ops import multi_conjugate_gradient
 
 
 class LinearOperatorCGSolver(tf.linalg.LinearOperator):
     def __init__(
         self,
         operator: tf.linalg.LinearOperator,
+        preconditioner: tp.Optional[tf.linalg.LinearOperator] = None,
         tol: float = 1e-5,
         max_iter: int = 20,
         name="LinearOperatorCGSolver",
@@ -12,6 +17,7 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
         assert operator.is_self_adjoint
         assert operator.is_positive_definite
         self._operator = operator
+        self._preconditioner = preconditioner
         self._tol = tol
         self._max_iter = max_iter
         super().__init__(
@@ -19,19 +25,25 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
             is_positive_definite=True,
             is_self_adjoint=True,
             name=name,
-            parameters=dict(operator=operator, tol=tol, max_iter=max_iter),
+            parameters=dict(
+                operator=operator,
+                tol=tol,
+                max_iter=max_iter,
+                preconditioner=self._preconditioner,
+            ),
         )
 
     def _matmul(self, x, adjoint: bool = False, adjoint_arg: bool = False) -> tf.Tensor:
         del adjoint  # necessarily self-adjoint
         if adjoint_arg:
-            axis = -2
-            x = tf.math.conj(x)
-        else:
-            axis = -1
-        xs = tf.unstack(x, axis=axis)
-
-        return tf.stack([self._matvec(xi) for xi in xs], axis=-1)
+            x = tf.linalg.adjoint(x)
+        return multi_conjugate_gradient(
+            self._operator,
+            x,
+            tol=self._tol,
+            max_iter=self._max_iter,
+            preconditioner=self._preconditioner,
+        ).x
 
     def _matvec(self, x, adjoint: bool = False) -> tf.Tensor:
         del adjoint  # necessarily self-adjoint
@@ -63,4 +75,4 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
 
     @property
     def _composite_tensor_fields(self):
-        return ("operator",)
+        return ("operator", "preconditioner")
