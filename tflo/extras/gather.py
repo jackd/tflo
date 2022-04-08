@@ -1,5 +1,7 @@
 import tensorflow as tf
 
+Dimension = tf.compat.v1.Dimension
+
 
 class LinearOperatorGather(tf.linalg.LinearOperator):
     def __init__(
@@ -40,12 +42,12 @@ class LinearOperatorGather(tf.linalg.LinearOperator):
         return tf.TensorShape((self.range_dimension, self.domain_dimension))
 
     @property
-    def range_dimension(self):
-        return self._indices.shape[0]
+    def range_dimension(self) -> Dimension:
+        return Dimension(self._indices.shape[0])
 
     @property
-    def domain_dimension(self):
-        return self._num_columns
+    def domain_dimension(self) -> Dimension:
+        return Dimension(self._num_columns)
 
     def _shape_tensor(self):
         return tf.stack(
@@ -135,12 +137,12 @@ class LinearOperatorScatter(tf.linalg.LinearOperator):
         return tf.TensorShape((self.range_dimension, self.domain_dimension))
 
     @property
-    def range_dimension(self):
-        return self._num_rows
+    def range_dimension(self) -> Dimension:
+        return Dimension(self._num_rows)
 
     @property
-    def domain_dimension(self):
-        return self._indices.shape[0]
+    def domain_dimension(self) -> Dimension:
+        return Dimension(self._indices.shape[0])
 
     def _shape_tensor(self):
         return tf.stack(

@@ -4,6 +4,8 @@ import tensorflow as tf
 
 from tflo import utils
 
+Dimension = tf.compat.v1.Dimension
+
 
 class LinearOperatorHStacked(tf.linalg.LinearOperator):
     """
@@ -45,14 +47,14 @@ class LinearOperatorHStacked(tf.linalg.LinearOperator):
         return utils.hstacked_shape([op.shape for op in self._operators])
 
     @property
-    def domain_dimension(self):
+    def domain_dimension(self) -> Dimension:
         dim = utils.concatenated_dimension([op.shape[-1] for op in self._operators])
-        return tf.compat.v1.Dimension(dim)
+        return Dimension(dim)
 
     @property
-    def range_dimension(self):
+    def range_dimension(self) -> Dimension:
         dim = utils.merged_dimension([op.shape[-2] for op in self._operators])
-        return tf.compat.v1.Dimension(dim)
+        return Dimension(dim)
 
     def _adjoint(self):
         return LinearOperatorVStacked([op.adjoint() for op in self._operators])
@@ -126,14 +128,14 @@ class LinearOperatorVStacked(tf.linalg.LinearOperator):
         return utils.vstacked_shape([op.shape for op in self._operators])
 
     @property
-    def domain_dimension(self):
+    def domain_dimension(self) -> Dimension:
         dim = utils.merged_dimension([op.shape[-1] for op in self._operators])
-        return tf.compat.v1.Dimension(dim)
+        return Dimension(dim)
 
     @property
-    def range_dimension(self):
+    def range_dimension(self) -> Dimension:
         dim = utils.concatenated_dimension([op.shape[-2] for op in self._operators])
-        return tf.compat.v1.Dimension(dim)
+        return Dimension(dim)
 
     def _adjoint(self):
         return LinearOperatorHStacked(tuple(op.adjoint() for op in self._operators))

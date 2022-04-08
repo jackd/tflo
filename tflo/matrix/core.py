@@ -130,12 +130,12 @@ class Matrix(tf.experimental.BatchableExtensionType, metaclass=abc.ABCMeta):
         return self.to_operator().batch_shape
 
     @property
-    def domain_dimension(self):
-        return self.to_operator().domain_dimension
+    def domain_dimension(self) -> int:
+        return int(self.to_operator().domain_dimension)
 
     @property
-    def range_dimension(self):
-        return self.to_operator().range_dimension
+    def range_dimension(self) -> int:
+        return int(self.to_operator().range_dimension)
 
     @property
     def dtype(self):

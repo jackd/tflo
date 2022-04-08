@@ -131,6 +131,13 @@ class LinearOperatorTest(abc.ABC):
         self.assertEqual(op.domain_dimension, op.domain_dimension_tensor())
         self.assertEqual(op.tensor_rank, op.tensor_rank_tensor())
 
+    def test_dimension_properties_are_dimensions(self, seed=0):
+        # LinearOperatorComposition does checks that require dimensions to be Dimensions
+        # raises an error if the returned value is an int or None.
+        op = self._get_operator(tf.random.Generator.from_seed(seed))
+        assert isinstance(op.range_dimension, tf.compat.v1.Dimension)
+        assert isinstance(op.domain_dimension, tf.compat.v1.Dimension)
+
 
 class SquareLinearOperatorTest(LinearOperatorTest):
     def test_is_square(self, seed=0):
@@ -215,7 +222,7 @@ class PositiveDefiniteLinearOperatorTest(NonSingularLinearOperatorTest):
 
 class MatrixTest(abc.ABC):
     @abc.abstractmethod
-    def _get_operator(self, rng: tf.random.Generator):
+    def _get_operator(self, rng: tf.random.Generator) -> tf.linalg.LinearOperator:
         pass
 
     def test_keras_input(self, seed=0):
