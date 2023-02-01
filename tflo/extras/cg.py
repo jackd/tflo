@@ -10,6 +10,7 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
         self,
         operator: tf.linalg.LinearOperator,
         preconditioner: tp.Optional[tf.linalg.LinearOperator] = None,
+        x0: tp.Optional[tf.Tensor] = None,
         tol: float = 1e-5,
         max_iter: int = 20,
         name="LinearOperatorCGSolver",
@@ -20,6 +21,7 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
         self._preconditioner = preconditioner
         self._tol = tol
         self._max_iter = max_iter
+        self._x0 = x0
         super().__init__(
             dtype=operator.dtype,
             is_positive_definite=True,
@@ -30,6 +32,7 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
                 tol=tol,
                 max_iter=max_iter,
                 preconditioner=self._preconditioner,
+                x0=x0,
             ),
         )
 
@@ -37,18 +40,32 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
         del adjoint  # necessarily self-adjoint
         if adjoint_arg:
             x = tf.linalg.adjoint(x)
-        return multi_conjugate_gradient(
+        x0 = self._x0
+        if x0 is not None and x0.shape.ndims:
+            x0 = tf.expand_dims(x0, axis=-1)
+            x0 = tf.tile(x0, (1,) * (x0.shape.ndims - 1) + (tf.shape(x)[-1],))
+        cg = multi_conjugate_gradient(
             self._operator,
             x,
             tol=self._tol,
             max_iter=self._max_iter,
             preconditioner=self._preconditioner,
-        ).x
+            x=x0,
+        )
+        x = cg.x
+        tf.debugging.assert_all_finite(
+            x, "conjugate_gradient did not return finite values"
+        )
+        return x
 
     def _matvec(self, x, adjoint: bool = False) -> tf.Tensor:
         del adjoint  # necessarily self-adjoint
         return tf.linalg.experimental.conjugate_gradient(
-            self._operator, x, tol=self.tol, max_iter=self.max_iter
+            self._operator,
+            x,
+            tol=self.tol,
+            max_iter=self.max_iter,
+            x=self._x0,
         ).x
 
     def _shape(self) -> tf.TensorShape:

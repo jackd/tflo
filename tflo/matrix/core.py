@@ -221,8 +221,20 @@ class Matrix(tf.experimental.BatchableExtensionType, metaclass=abc.ABCMeta):
     def trace(self, name: str = "trace"):
         return self.to_operator().trace(name=name)
 
+    def adjoint(self, name: str = "adjoint") -> "Matrix":
+        return Matrix.from_operator(self.to_operator().adjoint(name=name))
+
     def __matmul__(self, other):
-        return self.to_operator().__matmul__(other)
+        return tf.linalg.matmul(self, other)
+
+    def __add__(self, other):
+        return tf.math.add(self, other)
+
+    def __sub__(self, other):
+        return tf.math.subtract(self, other)
+
+    def __neg__(self):
+        return tf.math.negative(self)
 
 
 copy_docs(Matrix, tf.linalg.LinearOperator)
@@ -271,6 +283,17 @@ class AdjointMatrix(Matrix):
             return self.operator.dtype
 
 
+@tf.experimental.dispatch_for_api(tf.cast, {"x": AdjointMatrix})
+def _cast(x, dtype: tf.DType, name=None):
+    return AdjointMatrix(
+        tf.cast(x.operator, dtype, name=name),
+        is_non_singular=x.is_non_singular,
+        is_self_adjoint=x.is_self_adjoint,
+        is_positive_definite=x.is_positive_definite,
+        is_square=x.is_square,
+    )
+
+
 @register_matrix_cls(tf.linalg.LinearOperatorComposition)
 class CompositionMatrix(Matrix):
     operators: tp.Tuple[Matrix, ...]
@@ -290,6 +313,17 @@ class CompositionMatrix(Matrix):
             return tf.TensorShape(
                 (*self.operators[0].shape[:-1], self.operators[-1].shape[-1])
             )
+
+
+@tf.experimental.dispatch_for_api(tf.cast, {"x": CompositionMatrix})
+def _cast(x, dtype: tf.DType, name=None):
+    return CompositionMatrix(
+        tuple(tf.cast(op, dtype, name=name) for op in x.operators),
+        is_self_adjoint=x.is_self_adjoint,
+        is_non_singular=x.is_non_singular,
+        is_positive_definite=x.is_positive_definite,
+        is_square=x.is_square,
+    )
 
 
 @register_matrix_cls(tf.linalg.LinearOperatorDiag)
@@ -332,14 +366,25 @@ class FullMatrix(Matrix):
             return self.matrix.dtype
 
 
+@tf.experimental.dispatch_for_api(tf.cast, {"x": FullMatrix})
+def _cast(x, dtype: tf.DType, name=None):
+    return FullMatrix(
+        tf.cast(x.matrix, dtype, name=name),
+        is_self_adjoint=x.is_self_adjoint,
+        is_non_singular=x.is_non_singular,
+        is_positive_definite=x.is_positive_definite,
+        is_square=x.is_square,
+    )
+
+
 @register_matrix_cls(tf.linalg.LinearOperatorScaledIdentity)
 class ScaledIdentityMatrix(Matrix):
     num_rows: int
     multiplier: tf.Tensor
-    is_self_adjoint: tp.Optional[bool] = None
+    is_self_adjoint: tp.Optional[bool] = True
     is_non_singular: tp.Optional[bool] = None
     is_positive_definite: tp.Optional[bool] = None
-    is_square: tp.Optional[bool] = None
+    is_square: tp.Optional[bool] = True
     assert_proper_shapes: bool = False
     name: str = "ScaledIdentityMatrix"
 
@@ -353,3 +398,18 @@ class ScaledIdentityMatrix(Matrix):
         @property
         def dtype(self):
             return self.multiplier.dtype
+
+
+def composition_matrix(*args: tp.Iterable[Matrix], **kwargs) -> Matrix:
+    operators = []
+    for arg in args:
+        if isinstance(arg, CompositionMatrix):
+            operators.extend(arg.operators)
+        else:
+            operators.append(arg)
+    if len(operators) == 1:
+        assert not kwargs, kwargs
+        return operators[0]
+    if len(operators) == 0:
+        raise ValueError("Requires at least one operator.")
+    return CompositionMatrix(operators, **kwargs)

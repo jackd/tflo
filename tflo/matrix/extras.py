@@ -10,6 +10,7 @@ from tflo.matrix.core import Matrix, register_matrix_cls
 class CGSolverMatrix(Matrix):
     operator: Matrix
     preconditioner: tp.Optional[Matrix] = None
+    x0: tp.Optional[tf.Tensor] = None
     tol: float = 1e-5
     max_iter: int = 20
     name: str = "CGSolverMatrix"
@@ -172,3 +173,71 @@ class ScatterMatrix(Matrix):
         @property
         def shape(self):
             return tf.TensorShape((self.num_rows, self.indices.shape[0]))
+
+
+@register_matrix_cls(extras.LinearOperatorProg)
+class ProgMatrix(Matrix):
+    operator: Matrix
+    name: str = "ProgMatrix"
+
+    class Spec:
+        @property
+        def shape(self):
+            return self.operator.shape
+
+        @property
+        def dtype(self):
+            return self.operator.dtype
+
+
+@register_matrix_cls(extras.LinearOperatorSum)
+class SumMatrix(Matrix):
+    operators: tp.Tuple[Matrix, ...]
+    is_non_singular: tp.Optional[bool] = None
+    is_self_adjoint: tp.Optional[bool] = None
+    is_positive_definite: tp.Optional[bool] = None
+    is_square: tp.Optional[bool] = None
+    name: str = "SumMatrix"
+
+    class Spec:
+        @property
+        def shape(self):
+            shape = self.operators[0].shape
+            for op in self.operators[1:]:
+                shape = tf.broadcast_static_shape(shape, op.shape)
+            return shape
+
+        @property
+        def dtype(self):
+            return self.operators[0].dtype
+
+
+@register_matrix_cls(extras.LinearOperatorExponential)
+class ExponentialMatrix(Matrix):
+    operator: Matrix
+    name: str = "ExponentialMatrix"
+
+    class Spec:
+        @property
+        def shape(self):
+            return self.operator.shape
+
+        @property
+        def dtype(self):
+            return self.operator.dtype
+
+
+@register_matrix_cls(extras.LinearOperatorMapped)
+class MappedMatrix(Matrix):
+    operator: Matrix
+    parallel_iterations: tp.Optional[int] = None
+    name: str = "MappedMatrix"
+
+    class Spec:
+        @property
+        def shape(self):
+            return self.operator.shape
+
+        @property
+        def dtype(self):
+            return self.operator.dtype

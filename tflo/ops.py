@@ -1,9 +1,17 @@
 """Multiple RHS version of `tf.linalg.experimental.conjugate_gradient`."""
 
-import collections
 import typing as tp
 
 import tensorflow as tf
+
+
+class CGState(tp.NamedTuple):
+    i: tf.Tensor  # [n_rhs]
+    x: tf.Tensor  # [*b, n, n_rhs]
+    r: tf.Tensor  # [*b, n, n_rhs]
+    p: tf.Tensor  # [*b, n, n_rhs]
+    gamma: tf.Tensor  # [*b, n, n_rhs]
+    converged: tf.Tensor  # [*b, n_rhs]
 
 
 def multi_conjugate_gradient(
@@ -53,42 +61,50 @@ def multi_conjugate_gradient(
         - p: A rank-2 `Tensor` of shape `[..., N, n_rhs]`. `A`-conjugate basis vector.
         - gamma: \\(r \dot M \dot r\\), equivalent to  \\(||r||_2^2\\) when
           `preconditioner=None`.
-        - unconverged: [..., n_rhs] `bool` tensor flagging unconverged solutions.
+        - converged: [..., n_rhs] `bool` tensor flagging unconverged solutions.
     """
     if not (operator.is_self_adjoint and operator.is_positive_definite):
         raise ValueError("Expected a self-adjoint, positive definite operator.")
 
-    cg_state = collections.namedtuple(
-        "CGState", ["i", "x", "r", "p", "gamma", "unconverged"]
-    )
-
-    def stopping_criterion(i, state):
-        return tf.logical_and(i < max_iter, tf.reduce_any(state.unconverged))
-
     def dot(x, y):
-        return tf.reduce_sum(x * y, axis=-2)
+        return tf.einsum("...ij,...ij->...j", tf.math.conj(x), y)
 
-    def cg_step(i, state):  # pylint: disable=missing-docstring
+    def stopping_criterion(i, state: CGState):
+        return tf.logical_and(
+            i < max_iter, tf.logical_not(tf.reduce_all(state.converged))
+        )
+
+    def cg_step(i, state: CGState):  # pylint: disable=missing-docstring
         z = tf.linalg.matmul(operator, state.p)
         alpha = state.gamma / dot(state.p, z)
-        alpha = tf.expand_dims(alpha, axis=-2)
-        x = state.x + alpha * state.p
-        r = state.r - alpha * z
+        tf.debugging.assert_all_finite(alpha, "alpha must be finite")
+        x = state.x + alpha[..., None, :] * state.p
+        r = state.r - alpha[..., None, :] * z
         if preconditioner is None:
             q = r
         else:
             q = preconditioner.matmul(r)
         gamma = dot(r, q)
         beta = gamma / state.gamma
+        tf.debugging.assert_all_finite(beta, "beta must be finite")
         p = q + beta[..., None, :] * state.p
-        unconverged = tf.linalg.norm(state.r, axis=-2) > tol
-        gamma = tf.where(unconverged, gamma, state.gamma)
-        unconverged_ = tf.expand_dims(unconverged, axis=-2)
-        x = tf.where(unconverged_, x, state.x)
-        r = tf.where(unconverged_, r, state.r)
-        p = tf.where(unconverged_, p, state.p)
-        i = i + 1
-        return i, cg_state(i, x, r, p, gamma, unconverged)
+
+        converged = tf.linalg.norm(r, axis=-2) <= tol
+        # only update those that haven't converged.
+        old_converged = state.converged  # [..., n_rhs]
+        old_converged_ = tf.expand_dims(old_converged, axis=-2)  # [..., 1, n_rhs]
+        all_converged = tf.reduce_all(
+            old_converged, axis=range(x.shape.ndims - 2)
+        )  # [n_rhs]
+
+        return i + 1, CGState(
+            tf.where(all_converged, state.i, state.i + 1),
+            tf.where(old_converged_, state.x, x),
+            tf.where(old_converged_, state.r, r),
+            tf.where(old_converged_, state.p, p),
+            tf.where(old_converged, state.gamma, gamma),
+            tf.where(old_converged, old_converged, converged),
+        )
 
     # We now broadcast initial shapes so that we have fixed shapes per iteration.
 
@@ -112,16 +128,13 @@ def multi_conjugate_gradient(
             p0 = r0
         else:
             p0 = tf.linalg.matmul(preconditioner, r0)
-        gamma0 = dot(r0, p0)
-        i = tf.zeros((), dtype=tf.int32)
-        unconverged = tf.ones_like(tol, dtype=tf.bool)
-        state = cg_state(i=i, x=x, r=r0, p=p0, gamma=gamma0, unconverged=unconverged)
-        _, state = tf.while_loop(stopping_criterion, cg_step, [i, state])
-        return cg_state(
-            state.i,
-            x=state.x,
-            r=state.r,
-            p=state.p,
-            gamma=state.gamma,
-            unconverged=state.unconverged,
+        state = CGState(
+            i=tf.zeros(tf.shape(x)[-1], dtype=tf.int32),
+            x=x,
+            r=r0,
+            p=p0,
+            gamma=dot(r0, p0),
+            converged=tf.zeros_like(tol, dtype=tf.bool),
         )
+        _, state = tf.while_loop(stopping_criterion, cg_step, (0, state))
+        return state

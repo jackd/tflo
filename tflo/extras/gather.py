@@ -84,14 +84,16 @@ class LinearOperatorGather(tf.linalg.LinearOperator):
         return tf.gather(x, self._indices, axis=-1)
 
     def _to_dense(self):
-        n = tf.size(self._indices, out_type=self._indices.dtype)
-        r = tf.range(n)
-        indices_2d = tf.stack((r, self._indices), axis=1)
-        return tf.scatter_nd(
-            indices_2d,
-            tf.ones((n,), dtype=self.dtype),
-            tf.cast(self._shape_tensor(), tf.int64),
-        )
+        return tf.one_hot(self._indices, self._num_columns, dtype=self.dtype)
+
+        # n = tf.size(self._indices, out_type=self._indices.dtype)
+        # r = tf.range(n)
+        # indices_2d = tf.stack((r, self._indices), axis=1)
+        # return tf.scatter_nd(
+        #     indices_2d,
+        #     tf.ones((n,), dtype=self.dtype),
+        #     tf.cast(self._shape_tensor(), tf.int64),
+        # )
 
     @property
     def _composite_tensor_fields(self):

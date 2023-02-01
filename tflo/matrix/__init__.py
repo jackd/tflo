@@ -11,6 +11,8 @@ from tflo.matrix.core import (
 from tflo.matrix.extras import (
     CGSolverMatrix,
     HStackedMatrix,
+    MappedMatrix,
+    ProgMatrix,
     SparseMatrix,
     StaticPowerSeriesMatrix,
     VStackedMatrix,
@@ -28,5 +30,7 @@ __all__ = [
     "VStackedMatrix",
     "HStackedMatrix",
     "CGSolverMatrix",
+    "MappedMatrix",
+    "ProgMatrix",
     "StaticPowerSeriesMatrix",
 ]

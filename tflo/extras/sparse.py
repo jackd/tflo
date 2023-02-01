@@ -74,3 +74,6 @@ class LinearOperatorSparseMatrix(tf.linalg.LinearOperator):
     @property
     def _composite_tensor_fields(self):
         return ("matrix",)
+
+    def _adjoint(self):
+        raise Exception("here")
