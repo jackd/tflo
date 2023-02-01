@@ -13,6 +13,7 @@ This package uses [pre-commit](https://pre-commit.com/) to ensure commits meet m
 
 ```bash
 pip install pre-commit
+pre-commit autoupdate
 pre-commit install
 ```
 
