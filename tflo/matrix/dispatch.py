@@ -36,11 +36,7 @@ def _add(x: Matrix, y: Matrix, name=None):
 
 @tf.experimental.dispatch_for_api(tf.math.negative, {"x": Matrix})
 def _negative(x: Matrix, name=None):
-    neg = -tf.ones((), dtype=x.dtype)
-    return core.CompositionMatrix(
-        (core.ScaledIdentityMatrix(x.range_dimension, neg), x),
-        name=name or "negative",
-    )
+    return extras.NegativeMatrix(x, name=name or "negative")
 
 
 @tf.experimental.dispatch_for_api(tf.math.subtract, {"x": Matrix, "y": Matrix})

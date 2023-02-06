@@ -2,6 +2,7 @@ from tflo.extras.cg import LinearOperatorCGSolver
 from tflo.extras.exponential import LinearOperatorExponential
 from tflo.extras.gather import LinearOperatorGather, LinearOperatorScatter
 from tflo.extras.mapped import LinearOperatorMapped
+from tflo.extras.negative import LinearOperatorNegative
 from tflo.extras.prog import LinearOperatorProg
 from tflo.extras.series import LinearOperatorStaticPowerSeries
 from tflo.extras.sparse import LinearOperatorSparseMatrix
@@ -14,6 +15,7 @@ __all__ = [
     "LinearOperatorGather",
     "LinearOperatorScatter",
     "LinearOperatorMapped",
+    "LinearOperatorNegative",
     "LinearOperatorProg",
     "LinearOperatorSum",
     "LinearOperatorSparseMatrix",

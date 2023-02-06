@@ -49,7 +49,9 @@ class LinearOperatorStaticPowerSeries(tf.linalg.LinearOperator):
 
     def _matmul(self, x, adjoint: bool = False, adjoint_arg: bool = False):
         return self._mul(
-            lambda x: self._operator._matmul(x, adjoint=adjoint), x, adjoint_arg
+            lambda x: self._operator._matmul(x, adjoint=adjoint),
+            x,
+            adjoint_arg=adjoint_arg,
         )
 
     def _matvec(self, x, adjoint: bool = False):

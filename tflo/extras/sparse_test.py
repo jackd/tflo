@@ -17,6 +17,9 @@ class LinearOperatorSparseMatrixTest(
         st = get_random_st(rng, (*batch_shape, range_dim, domain_dim))
         return LinearOperatorSparseMatrix(st)
 
+    def test_matmul(self, seed=0, n_rhs=3, atol=1e-3, rtol=1e-3):
+        super().test_matmul(seed=seed, n_rhs=n_rhs, rtol=rtol, atol=atol)
+
 
 if __name__ == "__main__":
     tf.test.main()

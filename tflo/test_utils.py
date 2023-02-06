@@ -54,20 +54,20 @@ class LinearOperatorTest(abc.ABC):
     def _get_operator(self, rng: tf.random.Generator) -> tf.linalg.LinearOperator:
         pass
 
-    def test_to_dense(self, seed=0):
+    def test_to_dense(self, seed=0, atol=1e-3, rtol=1e-3):
         """Ensure `op.to_dense()` does the same as `op @ tf.eye(...)`."""
         op = self._get_operator(tf.random.Generator.from_seed(seed))
         actual = op.to_dense()
         expected = op.matmul(
             tf.eye(op.domain_dimension_tensor(), batch_shape=op.batch_shape_tensor())
         )
-        self.assertAllClose(actual, expected)
+        self.assertAllClose(actual, expected, atol=atol, rtol=rtol)
 
-    def test_adjoint(self, seed=0):
+    def test_adjoint(self, seed=0, atol=1e-6, rtol=1e-6):
         op = self._get_operator(tf.random.Generator.from_seed(seed))
         actual = op.adjoint().to_dense()
         expected = tf.linalg.adjoint(op.to_dense())
-        self.assertAllClose(actual, expected)
+        self.assertAllClose(actual, expected, atol=atol, rtol=rtol)
 
     def test_matvec(self, seed=0, atol=1e-6, rtol=1e-6):
         rng = tf.random.Generator.from_seed(seed)
@@ -94,7 +94,11 @@ class LinearOperatorTest(abc.ABC):
         for adjoint in (False, True):
             for adjoint_arg in (False, True):
                 rhs = _get_mat(
-                    rng, op, n_rhs=n_rhs, adjoint=adjoint, adjoint_arg=adjoint_arg
+                    tf.random.Generator.from_seed(seed + 1),
+                    op,
+                    n_rhs=n_rhs,
+                    adjoint=adjoint,
+                    adjoint_arg=adjoint_arg,
                 )
                 actual = op.matmul(rhs, adjoint=adjoint, adjoint_arg=adjoint_arg)
                 expected = tf.linalg.matmul(

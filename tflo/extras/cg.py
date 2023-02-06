@@ -2,7 +2,7 @@ import typing as tp
 
 import tensorflow as tf
 
-from tflo.ops import multi_conjugate_gradient
+from tflo.ops import multi_conjugate_gradient, single_conjugate_gradient
 
 
 class LinearOperatorCGSolver(tf.linalg.LinearOperator):
@@ -12,13 +12,14 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
         preconditioner: tp.Optional[tf.linalg.LinearOperator] = None,
         x0: tp.Optional[tf.Tensor] = None,
         tol: float = 1e-5,
+        atol: float = 1e-7,
         max_iter: int = 20,
         name="LinearOperatorCGSolver",
         *,
         is_non_singular: tp.Optional[bool] = None,
         is_positive_definite: tp.Optional[bool] = None,
         is_square: tp.Optional[bool] = None,
-        is_self_adjoint: tp.Optional[bool] = None
+        is_self_adjoint: tp.Optional[bool] = None,
     ):
         assert is_non_singular in (None, True)
         assert is_square in (None, True)
@@ -29,6 +30,7 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
         self._operator = operator
         self._preconditioner = preconditioner
         self._tol = tol
+        self._atol = atol
         self._max_iter = max_iter
         self._x0 = x0
         super().__init__(
@@ -39,6 +41,7 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
             parameters=dict(
                 operator=operator,
                 tol=tol,
+                atol=atol,
                 max_iter=max_iter,
                 preconditioner=self._preconditioner,
                 x0=x0,
@@ -57,6 +60,7 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
             self._operator,
             x,
             tol=self._tol,
+            atol=self._atol,
             max_iter=self._max_iter,
             preconditioner=self._preconditioner,
             x=x0,
@@ -69,10 +73,11 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
 
     def _matvec(self, x, adjoint: bool = False) -> tf.Tensor:
         del adjoint  # necessarily self-adjoint
-        return tf.linalg.experimental.conjugate_gradient(
+        return single_conjugate_gradient(
             self._operator,
             x,
-            tol=self.tol,
+            tol=self._tol,
+            atol=self._atol,
             max_iter=self.max_iter,
             x=self._x0,
         ).x
@@ -83,6 +88,10 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
     @property
     def tol(self) -> float:
         return self._tol
+
+    @property
+    def atol(self) -> float:
+        return self._atol
 
     @property
     def max_iter(self) -> int:
@@ -98,6 +107,9 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
     def _solvevec(self, rhs, adjoint=False):
         del adjoint  # necessarily self-adjoint
         return self._operator._matvec(rhs)
+
+    def _adjoint(self):
+        return self
 
     @property
     def _composite_tensor_fields(self):

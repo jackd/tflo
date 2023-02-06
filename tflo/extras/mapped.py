@@ -19,12 +19,14 @@ class LinearOperatorMapped(delegate.LinearOperatorDelegate):
         operator: tf.linalg.LinearOperator,
         parallel_iterations: tp.Optional[int] = None,
         name: str = "LinearOperatorProg",
+        **kwargs,
     ):
         self._parallel_iterations = parallel_iterations
         super().__init__(
             operator=operator,
             name=name,
             parameters=dict(parallel_iterations=parallel_iterations),
+            **kwargs,
         )
 
     @tf.function

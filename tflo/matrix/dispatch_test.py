@@ -53,9 +53,10 @@ class DispatchTest(tf.test.TestCase):
         expected = -x
         actual = -FullMatrix(x)
 
-        self.assertIsInstance(actual, core.CompositionMatrix)
+        self.assertIsInstance(actual, extras.NegativeMatrix)
         self.assertAllClose(actual.to_dense(), expected)
 
 
 if __name__ == "__main__":
+    tf.config.experimental.enable_op_determinism()
     tf.test.main()

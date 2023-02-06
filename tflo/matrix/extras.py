@@ -12,6 +12,7 @@ class CGSolverMatrix(Matrix):
     preconditioner: tp.Optional[Matrix] = None
     x0: tp.Optional[tf.Tensor] = None
     tol: float = 1e-5
+    atol: float = 1e-7
     max_iter: int = 20
     name: str = "CGSolverMatrix"
 
@@ -55,6 +56,21 @@ class CGSolverMatrix(Matrix):
         @property
         def is_non_singular(self) -> bool:
             return True
+
+
+@register_matrix_cls(extras.LinearOperatorNegative)
+class NegativeMatrix(Matrix):
+    operator: Matrix
+    name: str = "NegativeMatrix"
+
+    class Spec:
+        @property
+        def shape(self) -> tf.TensorShape:
+            return self.operator.shape
+
+        @property
+        def dtype(self):
+            return self.operator.dtype
 
 
 @register_matrix_cls(extras.LinearOperatorSparseMatrix)

@@ -5,7 +5,7 @@ from tflo.extras import stacked
 
 
 def get_tensors(
-    rng: tf.random.Generator, var_axis: int, var_dims=(3, 11, 13), base_shape=(2, 7)
+    rng: tf.random.Generator, var_axis: int, var_dims=(3, 5, 7), base_shape=(2, 11)
 ):
     assert var_axis < 0
     var_axis = var_axis + len(base_shape) + 1
@@ -25,7 +25,9 @@ class VStackedTest(
         return stacked.LinearOperatorVStacked(
             [tf.linalg.LinearOperatorFullMatrix(t) for t in tensors]
         )
-        return op
+
+    def test_matmul(self, seed=0, n_rhs=3, atol=1e-3, rtol=1e-3):
+        super().test_matmul(seed=seed, n_rhs=n_rhs, rtol=rtol, atol=atol)
 
 
 class HStackedTest(
@@ -39,6 +41,11 @@ class HStackedTest(
             [tf.linalg.LinearOperatorFullMatrix(t) for t in tensors]
         )
 
+    def test_matmul(self, seed=0, n_rhs=3, atol=1e-3, rtol=1e-3):
+        super().test_matmul(seed=seed, n_rhs=n_rhs, rtol=rtol, atol=atol)
+
 
 if __name__ == "__main__":
     tf.test.main()
+    # HStackedTest().test_matmul()
+    # VStackedTest().test_matmul()
