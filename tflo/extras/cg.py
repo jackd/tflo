@@ -14,7 +14,16 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
         tol: float = 1e-5,
         max_iter: int = 20,
         name="LinearOperatorCGSolver",
+        *,
+        is_non_singular: tp.Optional[bool] = None,
+        is_positive_definite: tp.Optional[bool] = None,
+        is_square: tp.Optional[bool] = None,
+        is_self_adjoint: tp.Optional[bool] = None
     ):
+        assert is_non_singular in (None, True)
+        assert is_square in (None, True)
+        assert is_self_adjoint in (None, True)
+        assert is_positive_definite in (None, True)
         assert operator.is_self_adjoint
         assert operator.is_positive_definite
         self._operator = operator
@@ -92,4 +101,4 @@ class LinearOperatorCGSolver(tf.linalg.LinearOperator):
 
     @property
     def _composite_tensor_fields(self):
-        return ("operator", "preconditioner")
+        return ("operator", "preconditioner", "x0")

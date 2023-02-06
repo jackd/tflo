@@ -21,3 +21,11 @@ __all__ = [
     "LinearOperatorHStacked",
     "LinearOperatorVStacked",
 ]
+
+from tensorflow.python.ops.linalg.linear_operator import make_composite_tensor
+
+loc = locals()
+for k in __all__:
+    if k.startswith("LinearOperator"):
+        make_composite_tensor(loc[k])
+del make_composite_tensor, k, loc

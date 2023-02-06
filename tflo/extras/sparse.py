@@ -12,6 +12,7 @@ class LinearOperatorSparseMatrix(tf.linalg.LinearOperator):
         is_positive_definite: tp.Optional[bool] = None,
         is_square: tp.Optional[bool] = None,
         name="LinearOperatorSparseMatrix",
+        **kwargs
     ):
         r"""Initialize a `LinearOperatorSparseMatrix`.
 
@@ -31,6 +32,7 @@ class LinearOperatorSparseMatrix(tf.linalg.LinearOperator):
         Raises:
           NotImplementedError: matrix shape is more than rank 2.
         """
+        assert not kwargs
         if matrix.shape.ndims > 2:
             raise NotImplementedError("Batched sparse tensors not currently supported")
         parameters = dict(
